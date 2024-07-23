@@ -4,28 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Art Studio Reservation</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
-        #calendar div {
-            display: inline-block;
-            width: 30px;
-            height: 30px;
-            margin: 2px;
-            text-align: center;
-            line-height: 30px;
-            cursor: pointer;
-            border: 1px solid #ccc;
+        #calendar {
+            margin-bottom: 20px;
         }
-        #calendar div.selected {
-            background-color: #ffeb3b;
+        #reserveBtn {
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
     <h1>Art Studio Reservation</h1>
-    <div id="calendar"></div>
+    <input type="text" id="calendar" placeholder="Select Date">
     <p>Selected Date: <span id="selectedDate">None</span></p>
     <p>Remaining Reservations: <span id="remaining">3</span></p>
     <button id="reserveBtn">Reserve</button>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ko.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
