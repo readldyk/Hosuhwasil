@@ -219,4 +219,77 @@ async function reserve() {
         return;
     }
     const endTime = addHours(selectedTime, 2);
-    const newReservation = generateTimeSlots(selectedTime
+    const newReservation = generateTimeSlots(selectedTime, endTime);
+
+    // Check if any of the selected slots are already booked
+    if (newReservation.some(time => reservations[selectedDate]?.[time]?.users?.includes(loggedInUser.phone))) {
+        alert('선택한 시간 중 일부가 이미 예약되었습니다.');
+        return;
+    }
+
+    reservations[selectedDate] = reservations[selectedDate] || {};
+    newReservation.forEach(time => {
+        reservations[selectedDate][time] = reservations[selectedDate][time] || { users: [] };
+        reservations[selectedDate][time].users.push(loggedInUser.phone);
+    });
+
+    loggedInUser.remaining--;
+    document.getElementById('remaining').innerText = loggedInUser.remaining;
+
+    await saveData();
+    alert(`예약이 완료되었습니다: ${selectedDate} ${selectedTime} - ${endTime}`);
+    generateTimeTable(selectedDate);
+}
+
+async function cancelReservation() {
+    if (!selectedDate || !selectedTime) {
+        alert('날짜와 시간을 선택하세요.');
+        return;
+    }
+    const endTime = addHours(selectedTime, 2);
+    const cancelReservation = generateTimeSlots(selectedTime, endTime);
+
+    reservations[selectedDate] = reservations[selectedDate] || {};
+    cancelReservation.forEach(time => {
+        if (reservations[selectedDate][time]) {
+            reservations[selectedDate][time].users = reservations[selectedDate][time].users.filter(phone => phone !== loggedInUser.phone);
+            if (reservations[selectedDate][time].users.length === 0) {
+                delete reservations[selectedDate][time];
+            }
+        }
+    });
+
+    loggedInUser.remaining++;
+    document.getElementById('remaining').innerText = loggedInUser.remaining;
+
+    await saveData();
+    alert(`예약이 취소되었습니다: ${selectedDate} ${selectedTime} - ${endTime}`);
+    generateTimeTable(selectedDate);
+}
+
+async function updateReservations() {
+    const reservationList = document.getElementById('reservations');
+    reservationList.innerHTML = '';
+    if (reservations[selectedDate]) {
+        for (const [time, data] of Object.entries(reservations[selectedDate])) {
+            const listItem = document.createElement('li');
+            listItem.innerText = `${time}: ${data.users.join(', ')}`;
+            reservationList.appendChild(listItem);
+        }
+    }
+}
+
+function generateUserCalendar() {
+    const userCalendar = document.getElementById('userCalendar');
+    userCalendar.innerHTML = '';
+    const calendar = flatpickr(userCalendar, {
+        locale: "ko",
+        inline: true,
+        dateFormat: "Y-m-d",
+        onChange: function(selectedDates, dateStr, instance) {
+            selectedDate = dateStr;
+            document.getElementById('selectedDate').innerText = selectedDate;
+            generateTimeTable(selectedDate);
+        }
+    });
+}
