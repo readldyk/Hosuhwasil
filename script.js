@@ -1,15 +1,52 @@
-const adminPhone = '010-0000-0000'; // 관리자 전화번호
-let users = JSON.parse(localStorage.getItem('users')) || {};
-let reservations = JSON.parse(localStorage.getItem('reservations')) || {};
+const apiKey = '$2a$10$3tjQDhwiVdj4E91Xy22WJOrGRdeAhHOYGyy1LTJS39c3efOzmfnHC'; // JSONBin.io API 키
+const binId = '$2a$10$3tjQDhwiVdj4E91Xy22WJOrGRdeAhHOYGyy1LTJS39c3efOzmfnHC'; // JSONBin.io 빈 ID
+let users = {};
+let reservations = {};
 let loggedInUser = null;
 let selectedDate = null;
 let selectedTime = null;
 let selectedUser = null; // 관리자가 선택한 사용자
 
-document.addEventListener('DOMContentLoaded', () => {
+// JSONBin.io에서 데이터 로드
+async function loadData() {
+    try {
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+            headers: {
+                'X-Master-Key': apiKey
+            }
+        });
+        const data = await response.json();
+        users = data.record.users || {};
+        reservations = data.record.reservations || {};
+    } catch (error) {
+        console.error('Error loading data:', error);
+    }
+}
+
+// JSONBin.io에 데이터 저장
+async function saveData() {
+    try {
+        const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Master-Key': apiKey
+            },
+            body: JSON.stringify({ users, reservations })
+        });
+        const data = await response.json();
+        console.log('Data saved:', data);
+    } catch (error) {
+        console.error('Error saving data:', error);
+    }
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await loadData();
+
     if (Object.keys(users).length === 0) {
         users[adminPhone] = { name: '관리자', phone: adminPhone, password: 'admin', isAdmin: true, remaining: 0 };
-        localStorage.setItem('users', JSON.stringify(users));
+        await saveData();
     }
 
     flatpickr("#calendar", {
@@ -35,7 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('login').style.display = 'block'; // 로그인 화면 표시
 });
 
-function login() {
+async function login() {
     const phone = document.getElementById('phone').value;
     const passwordInput = document.getElementById('password');
     const loginError = document.getElementById('loginError');
@@ -76,7 +113,7 @@ function showUserScreen() {
     generateUserCalendar();
 }
 
-function registerUser() {
+async function registerUser() {
     const name = document.getElementById('userName').value;
     const phone = document.getElementById('userPhone').value;
     if (!name || !phone) {
@@ -84,19 +121,19 @@ function registerUser() {
         return;
     }
     users[phone] = { name, phone, remaining: 0 };
-    localStorage.setItem('users', JSON.stringify(users));
+    await saveData();
     alert('사용자가 등록되었습니다.');
     updateUserList();
 }
 
-function updateRemaining() {
+async function updateRemaining() {
     const remaining = document.getElementById('remainingCount').value;
     if (!selectedUser) {
         alert('사용자를 선택하세요.');
         return;
     }
     users[selectedUser].remaining = parseInt(remaining, 10);
-    localStorage.setItem('users', JSON.stringify(users));
+    await saveData();
     alert('잔여 횟수가 업데이트되었습니다.');
     updateUserList();
 }
@@ -172,7 +209,7 @@ function addHours(time, hours) {
     return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
 }
 
-function reserve() {
+async function reserve() {
     if (!selectedDate || !selectedTime) {
         alert('날짜와 시간을 선택하세요.');
         return;
@@ -182,79 +219,4 @@ function reserve() {
         return;
     }
     const endTime = addHours(selectedTime, 2);
-    const newReservation = generateTimeSlots(selectedTime, endTime);
-
-    // Check if any of the selected slots are already booked
-    if (newReservation.some(time => reservations[selectedDate]?.[time]?.users?.includes(loggedInUser.phone))) {
-        alert('선택한 시간 중 일부가 이미 예약되었습니다.');
-        return;
-    }
-
-    reservations[selectedDate] = reservations[selectedDate] || {};
-    newReservation.forEach(time => {
-        reservations[selectedDate][time] = reservations[selectedDate][time] || { users: [] };
-        reservations[selectedDate][time].users.push(loggedInUser.phone);
-    });
-
-    loggedInUser.remaining--;
-    document.getElementById('remaining').innerText = loggedInUser.remaining;
-
-    localStorage.setItem('reservations', JSON.stringify(reservations));
-    localStorage.setItem('users', JSON.stringify(users));
-    alert(`예약이 완료되었습니다: ${selectedDate} ${selectedTime} - ${endTime}`);
-    generateTimeTable(selectedDate);
-}
-
-function cancelReservation() {
-    if (!selectedDate || !selectedTime) {
-        alert('날짜와 시간을 선택하세요.');
-        return;
-    }
-    const endTime = addHours(selectedTime, 2);
-    const cancelReservation = generateTimeSlots(selectedTime, endTime);
-
-    reservations[selectedDate] = reservations[selectedDate] || {};
-    cancelReservation.forEach(time => {
-        if (reservations[selectedDate][time]) {
-            reservations[selectedDate][time].users = reservations[selectedDate][time].users.filter(phone => phone !== loggedInUser.phone);
-            if (reservations[selectedDate][time].users.length === 0) {
-                delete reservations[selectedDate][time];
-            }
-        }
-    });
-
-    loggedInUser.remaining++;
-    document.getElementById('remaining').innerText = loggedInUser.remaining;
-
-    localStorage.setItem('reservations', JSON.stringify(reservations));
-    localStorage.setItem('users', JSON.stringify(users));
-    alert(`예약이 취소되었습니다: ${selectedDate} ${selectedTime} - ${endTime}`);
-    generateTimeTable(selectedDate);
-}
-
-function updateReservations() {
-    const reservationList = document.getElementById('reservations');
-    reservationList.innerHTML = '';
-    if (reservations[selectedDate]) {
-        for (const [time, data] of Object.entries(reservations[selectedDate])) {
-            const listItem = document.createElement('li');
-            listItem.innerText = `${time}: ${data.users.join(', ')}`;
-            reservationList.appendChild(listItem);
-        }
-    }
-}
-
-function generateUserCalendar() {
-    const userCalendar = document.getElementById('userCalendar');
-    userCalendar.innerHTML = '';
-    const calendar = flatpickr(userCalendar, {
-        locale: "ko",
-        inline: true,
-        dateFormat: "Y-m-d",
-        onChange: function(selectedDates, dateStr, instance) {
-            selectedDate = dateStr;
-            document.getElementById('selectedDate').innerText = selectedDate;
-            generateTimeTable(selectedDate);
-        }
-    });
-}
+    const newReservation = generateTimeSlots(selectedTime
