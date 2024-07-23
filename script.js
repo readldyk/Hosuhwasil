@@ -20,6 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
             generateTimeTable(selectedDate);
         }
     });
+    
+    document.getElementById('login').style.display = 'block'; // 로그인 화면 표시
 });
 
 function login() {
