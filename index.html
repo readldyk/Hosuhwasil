@@ -9,12 +9,14 @@
         body { font-family: Arial, sans-serif; }
         .container { max-width: 800px; margin: 0 auto; padding: 20px; }
         #login, #admin, #user, #timeTable { display: none; }
-        #calendar { margin-bottom: 20px; }
+        #calendar, #adminCalendar { margin-bottom: 20px; }
         #reserveBtn, #cancelBtn { margin-top: 20px; }
         #timeTable { margin-top: 20px; display: flex; flex-wrap: wrap; }
         .time-slot { margin: 5px; padding: 10px; border: 1px solid #ccc; cursor: pointer; width: 100px; text-align: center; }
         .time-slot.selected { background-color: #ffeb3b; }
         .time-slot.booked { background-color: #f44336; cursor: not-allowed; }
+        .user-info, .user-controls { margin-bottom: 20px; }
+        .user-list { margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -29,28 +31,33 @@
         <div id="admin">
             <h2>관리자 화면</h2>
             <div>
-                <h3>사용자 등록</h3>
+                <h3>사용자 목록</h3>
+                <ul id="userList"></ul>
+            </div>
+            <div class="user-controls">
                 <input type="text" id="userName" placeholder="사용자 이름">
                 <input type="text" id="userPhone" placeholder="사용자 휴대폰 번호">
                 <button onclick="registerUser()">사용자 등록</button>
             </div>
-            <div>
-                <h3>사용자 잔여횟수 등록</h3>
-                <input type="text" id="remainingPhone" placeholder="사용자 휴대폰 번호">
+            <div class="user-controls">
                 <input type="number" id="remainingCount" placeholder="잔여 횟수">
-                <button onclick="updateRemaining()">잔여횟수 등록</button>
+                <button onclick="updateRemaining()">잔여횟수 수정</button>
             </div>
             <div>
                 <h3>예약 현황</h3>
+                <input type="text" id="adminCalendar" placeholder="날짜 선택">
                 <ul id="reservations"></ul>
             </div>
         </div>
         <div id="user">
-            <h2>사용자 화면</h2>
-            <input type="text" id="calendar" placeholder="날짜 선택">
-            <p>선택된 날짜: <span id="selectedDate">None</span></p>
+            <div class="user-info">
+                <p>사용자: <span id="userNameDisplay"></span></p>
+                <p>번호: <span id="userPhoneDisplay"></span></p>
+                <p>잔여 횟수: <span id="remaining"></span></p>
+            </div>
+            <input type="text" id="calendar" placeholder="날짜 선택" style="display:none;">
+            <div id="userCalendar"></div>
             <div id="timeTable"></div>
-            <p>잔여 횟수: <span id="remaining">0</span></p>
             <button id="reserveBtn" onclick="reserve()">예약</button>
             <button id="cancelBtn" onclick="cancelReservation()">예약 취소</button>
         </div>
