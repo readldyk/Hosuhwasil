@@ -8,7 +8,7 @@ let selectedUser = null; // 관리자가 선택한 사용자
 
 document.addEventListener('DOMContentLoaded', () => {
     if (Object.keys(users).length === 0) {
-        users[adminPhone] = { name: '관리자', password: '8962', isAdmin: true, remaining: 0 };
+        users[adminPhone] = { name: '관리자', phone: adminPhone, password: '8962', isAdmin: true, remaining: 0 };
         localStorage.setItem('users', JSON.stringify(users));
     }
 
@@ -38,21 +38,24 @@ document.addEventListener('DOMContentLoaded', () => {
 function login() {
     const phone = document.getElementById('phone').value;
     const passwordInput = document.getElementById('password');
+    const loginError = document.getElementById('loginError');
+    loginError.style.display = 'none';
+
     if (phone === adminPhone) {
         passwordInput.style.display = 'block';
-        return;
-    } 
-    if (users[phone]) {
-        if (phone === adminPhone && users[phone].password !== passwordInput.value) {
-            alert('잘못된 암호입니다.');
-            return;
-        }
-        loggedInUser = users[phone];
-        if (loggedInUser.isAdmin) {
+        const password = passwordInput.value;
+        if (users[phone] && users[phone].password === password) {
+            loggedInUser = users[phone];
             showAdminScreen();
         } else {
-            showUserScreen();
+            loginError.style.display = 'block';
         }
+        return;
+    }
+
+    if (users[phone]) {
+        loggedInUser = users[phone];
+        showUserScreen();
     } else {
         alert('등록되지 않은 사용자입니다.');
     }
@@ -232,17 +235,12 @@ function cancelReservation() {
 function updateReservations() {
     const reservationList = document.getElementById('reservations');
     reservationList.innerHTML = '';
-    for (const [date, times] of Object.entries(reservations)) {
-        const listItem = document.createElement('li');
-        listItem.innerText = `${date}:`;
-        const timeList = document.createElement('ul');
-        for (const [time, data] of Object.entries(times)) {
-            const timeItem = document.createElement('li');
-            timeItem.innerText = `${time}: ${data.users.join(', ')}`;
-            timeList.appendChild(timeItem);
+    if (reservations[selectedDate]) {
+        for (const [time, data] of Object.entries(reservations[selectedDate])) {
+            const listItem = document.createElement('li');
+            listItem.innerText = `${time}: ${data.users.join(', ')}`;
+            reservationList.appendChild(listItem);
         }
-        listItem.appendChild(timeList);
-        reservationList.appendChild(listItem);
     }
 }
 
