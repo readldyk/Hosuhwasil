@@ -15,19 +15,12 @@ document.getElementById('reserveBtn').addEventListener('click', () => {
     }
 });
 
-// Simple calendar code
-const calendar = document.getElementById('calendar');
-for (let i = 1; i <= 31; i++) {
-    const day = document.createElement('div');
-    day.innerText = i;
-    day.addEventListener('click', () => {
-        if (selectedDate) {
-            document.querySelector(`#calendar div[data-day="${selectedDate}"]`).classList.remove('selected');
-        }
-        selectedDate = i;
+// Initialize Flatpickr with Korean locale
+flatpickr("#calendar", {
+    locale: "ko",
+    dateFormat: "Y-m-d",
+    onChange: function(selectedDates, dateStr, instance) {
+        selectedDate = dateStr;
         document.getElementById('selectedDate').innerText = selectedDate;
-        day.classList.add('selected');
-    });
-    day.setAttribute('data-day', i);
-    calendar.appendChild(day);
-}
+    }
+});
