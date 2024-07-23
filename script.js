@@ -1,4 +1,4 @@
-const adminPhone = '8962'; // 관리자 전화번호
+const adminPhone = '010-0000-0000'; // 관리자 전화번호
 let users = JSON.parse(localStorage.getItem('users')) || {};
 let reservations = JSON.parse(localStorage.getItem('reservations')) || {};
 let loggedInUser = null;
@@ -8,7 +8,7 @@ let selectedUser = null; // 관리자가 선택한 사용자
 
 document.addEventListener('DOMContentLoaded', () => {
     if (Object.keys(users).length === 0) {
-        users[adminPhone] = { name: '관리자', phone: adminPhone, password: '8962', isAdmin: true, remaining: 0 };
+        users[adminPhone] = { name: '관리자', phone: adminPhone, password: 'admin', isAdmin: true, remaining: 0 };
         localStorage.setItem('users', JSON.stringify(users));
     }
 
