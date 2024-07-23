@@ -1,5 +1,7 @@
 const apiKey = '$2a$10$3tjQDhwiVdj4E91Xy22WJOrGRdeAhHOYGyy1LTJS39c3efOzmfnHC'; // JSONBin.io API 키
 const binId = '669f584ee41b4d34e415d404'; // JSONBin.io 빈 ID
+const adminPhone = '8962'; // 관리자 전화번호 및 비밀번호
+const adminPassword = '8962'; // 관리자 비밀번호
 let users = {};
 let reservations = {};
 let loggedInUser = null;
@@ -45,7 +47,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     await loadData();
 
     if (Object.keys(users).length === 0) {
-        users[adminPhone] = { name: '관리자', phone: adminPhone, password: 'admin', isAdmin: true, remaining: 0 };
+        users[adminPhone] = { name: '관리자', phone: adminPhone, password: adminPassword, isAdmin: true, remaining: 0 };
         await saveData();
     }
 
