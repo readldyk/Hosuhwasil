@@ -1,13 +1,14 @@
-const adminPhone = '64145614'; // 관리자 전화번호
+const adminPhone = '8962'; // 관리자 전화번호
 let users = JSON.parse(localStorage.getItem('users')) || {};
 let reservations = JSON.parse(localStorage.getItem('reservations')) || {};
 let loggedInUser = null;
 let selectedDate = null;
 let selectedTime = null;
+let selectedUser = null; // 관리자가 선택한 사용자
 
 document.addEventListener('DOMContentLoaded', () => {
     if (Object.keys(users).length === 0) {
-        users[adminPhone] = { name: '관리자', password: 'admin', isAdmin: true, remaining: 0 };
+        users[adminPhone] = { name: '관리자', password: '8962', isAdmin: true, remaining: 0 };
         localStorage.setItem('users', JSON.stringify(users));
     }
 
@@ -20,7 +21,17 @@ document.addEventListener('DOMContentLoaded', () => {
             generateTimeTable(selectedDate);
         }
     });
-    
+
+    flatpickr("#adminCalendar", {
+        locale: "ko",
+        dateFormat: "Y-m-d",
+        onChange: function(selectedDates, dateStr, instance) {
+            selectedDate = dateStr;
+            document.getElementById('selectedDate').innerText = selectedDate;
+            updateReservations();
+        }
+    });
+
     document.getElementById('login').style.display = 'block'; // 로그인 화면 표시
 });
 
@@ -29,33 +40,37 @@ function login() {
     const passwordInput = document.getElementById('password');
     if (phone === adminPhone) {
         passwordInput.style.display = 'block';
-        const password = passwordInput.value;
-        if (users[phone] && users[phone].password === password) {
-            loggedInUser = users[phone];
+        return;
+    } 
+    if (users[phone]) {
+        if (phone === adminPhone && users[phone].password !== passwordInput.value) {
+            alert('잘못된 암호입니다.');
+            return;
+        }
+        loggedInUser = users[phone];
+        if (loggedInUser.isAdmin) {
             showAdminScreen();
         } else {
-            alert('잘못된 암호입니다.');
+            showUserScreen();
         }
     } else {
-        if (users[phone]) {
-            loggedInUser = users[phone];
-            showUserScreen();
-        } else {
-            alert('등록되지 않은 사용자입니다.');
-        }
+        alert('등록되지 않은 사용자입니다.');
     }
 }
 
 function showAdminScreen() {
     document.getElementById('login').style.display = 'none';
     document.getElementById('admin').style.display = 'block';
-    updateReservations();
+    updateUserList();
 }
 
 function showUserScreen() {
     document.getElementById('login').style.display = 'none';
     document.getElementById('user').style.display = 'block';
+    document.getElementById('userNameDisplay').innerText = loggedInUser.name;
+    document.getElementById('userPhoneDisplay').innerText = loggedInUser.phone;
     document.getElementById('remaining').innerText = loggedInUser.remaining;
+    generateUserCalendar();
 }
 
 function registerUser() {
@@ -65,21 +80,40 @@ function registerUser() {
         alert('모든 필드를 입력하세요.');
         return;
     }
-    users[phone] = { name, remaining: 0 };
+    users[phone] = { name, phone, remaining: 0 };
     localStorage.setItem('users', JSON.stringify(users));
     alert('사용자가 등록되었습니다.');
+    updateUserList();
 }
 
 function updateRemaining() {
-    const phone = document.getElementById('remainingPhone').value;
     const remaining = document.getElementById('remainingCount').value;
-    if (!users[phone]) {
-        alert('등록되지 않은 사용자입니다.');
+    if (!selectedUser) {
+        alert('사용자를 선택하세요.');
         return;
     }
-    users[phone].remaining = parseInt(remaining, 10);
+    users[selectedUser].remaining = parseInt(remaining, 10);
     localStorage.setItem('users', JSON.stringify(users));
     alert('잔여 횟수가 업데이트되었습니다.');
+    updateUserList();
+}
+
+function updateUserList() {
+    const userList = document.getElementById('userList');
+    userList.innerHTML = '';
+    for (const [phone, user] of Object.entries(users)) {
+        if (phone !== adminPhone) {
+            const listItem = document.createElement('li');
+            listItem.innerText = `${user.name} (${phone}): 잔여횟수 ${user.remaining}`;
+            listItem.onclick = () => {
+                selectedUser = phone;
+                document.getElementById('userName').value = user.name;
+                document.getElementById('userPhone').value = phone;
+                document.getElementById('remainingCount').value = user.remaining;
+            };
+            userList.appendChild(listItem);
+        }
+    }
 }
 
 function generateTimeTable(date) {
@@ -91,14 +125,19 @@ function generateTimeTable(date) {
         const timeSlot = document.createElement('div');
         timeSlot.innerText = time;
         timeSlot.className = 'time-slot';
-        if (reservations[date]?.includes(time)) {
+        const bookedUsers = reservations[date]?.[time]?.users || [];
+        if (bookedUsers.length > 0) {
             timeSlot.classList.add('booked');
-        } else {
+            timeSlot.innerText += ` (${bookedUsers.length}/3)`;
+        }
+        if (bookedUsers.length < 3) {
             timeSlot.addEventListener('click', () => {
                 document.querySelectorAll('.time-slot').forEach(slot => slot.classList.remove('selected'));
                 timeSlot.classList.add('selected');
                 selectedTime = time;
             });
+        } else {
+            timeSlot.classList.add('fully-booked');
         }
         timeTable.appendChild(timeSlot);
     });
@@ -143,13 +182,17 @@ function reserve() {
     const newReservation = generateTimeSlots(selectedTime, endTime);
 
     // Check if any of the selected slots are already booked
-    if (newReservation.some(time => reservations[selectedDate]?.includes(time))) {
+    if (newReservation.some(time => reservations[selectedDate]?.[time]?.users?.includes(loggedInUser.phone))) {
         alert('선택한 시간 중 일부가 이미 예약되었습니다.');
         return;
     }
 
-    reservations[selectedDate] = reservations[selectedDate] || [];
-    reservations[selectedDate].push(...newReservation);
+    reservations[selectedDate] = reservations[selectedDate] || {};
+    newReservation.forEach(time => {
+        reservations[selectedDate][time] = reservations[selectedDate][time] || { users: [] };
+        reservations[selectedDate][time].users.push(loggedInUser.phone);
+    });
+
     loggedInUser.remaining--;
     document.getElementById('remaining').innerText = loggedInUser.remaining;
 
@@ -167,7 +210,16 @@ function cancelReservation() {
     const endTime = addHours(selectedTime, 2);
     const cancelReservation = generateTimeSlots(selectedTime, endTime);
 
-    reservations[selectedDate] = reservations[selectedDate]?.filter(time => !cancelReservation.includes(time)) || [];
+    reservations[selectedDate] = reservations[selectedDate] || {};
+    cancelReservation.forEach(time => {
+        if (reservations[selectedDate][time]) {
+            reservations[selectedDate][time].users = reservations[selectedDate][time].users.filter(phone => phone !== loggedInUser.phone);
+            if (reservations[selectedDate][time].users.length === 0) {
+                delete reservations[selectedDate][time];
+            }
+        }
+    });
+
     loggedInUser.remaining++;
     document.getElementById('remaining').innerText = loggedInUser.remaining;
 
@@ -182,7 +234,29 @@ function updateReservations() {
     reservationList.innerHTML = '';
     for (const [date, times] of Object.entries(reservations)) {
         const listItem = document.createElement('li');
-        listItem.innerText = `${date}: ${times.join(', ')}`;
+        listItem.innerText = `${date}:`;
+        const timeList = document.createElement('ul');
+        for (const [time, data] of Object.entries(times)) {
+            const timeItem = document.createElement('li');
+            timeItem.innerText = `${time}: ${data.users.join(', ')}`;
+            timeList.appendChild(timeItem);
+        }
+        listItem.appendChild(timeList);
         reservationList.appendChild(listItem);
     }
+}
+
+function generateUserCalendar() {
+    const userCalendar = document.getElementById('userCalendar');
+    userCalendar.innerHTML = '';
+    const calendar = flatpickr(userCalendar, {
+        locale: "ko",
+        inline: true,
+        dateFormat: "Y-m-d",
+        onChange: function(selectedDates, dateStr, instance) {
+            selectedDate = dateStr;
+            document.getElementById('selectedDate').innerText = selectedDate;
+            generateTimeTable(selectedDate);
+        }
+    });
 }
