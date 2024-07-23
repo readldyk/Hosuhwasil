@@ -4,10 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Art Studio Reservation</title>
+    <style>
+        #calendar div {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            margin: 2px;
+            text-align: center;
+            line-height: 30px;
+            cursor: pointer;
+            border: 1px solid #ccc;
+        }
+        #calendar div.selected {
+            background-color: #ffeb3b;
+        }
+    </style>
 </head>
 <body>
     <h1>Art Studio Reservation</h1>
     <div id="calendar"></div>
+    <p>Selected Date: <span id="selectedDate">None</span></p>
     <p>Remaining Reservations: <span id="remaining">3</span></p>
     <button id="reserveBtn">Reserve</button>
     <script src="script.js"></script>
