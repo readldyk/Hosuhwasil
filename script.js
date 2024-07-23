@@ -1,5 +1,5 @@
 const apiKey = '$2a$10$3tjQDhwiVdj4E91Xy22WJOrGRdeAhHOYGyy1LTJS39c3efOzmfnHC'; // JSONBin.io API 키
-const binId = '$2a$10$3tjQDhwiVdj4E91Xy22WJOrGRdeAhHOYGyy1LTJS39c3efOzmfnHC'; // JSONBin.io 빈 ID
+const binId = '669f584ee41b4d34e415d404'; // JSONBin.io 빈 ID
 let users = {};
 let reservations = {};
 let loggedInUser = null;
