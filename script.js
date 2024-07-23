@@ -20,6 +20,7 @@ async function loadData() {
         const data = await response.json();
         users = data.record.users || {};
         reservations = data.record.reservations || {};
+        console.log('Data loaded:', data.record);
     } catch (error) {
         console.error('Error loading data:', error);
     }
