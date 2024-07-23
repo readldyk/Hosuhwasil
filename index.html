@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,12 +12,33 @@
         #reserveBtn {
             margin-top: 20px;
         }
+        #timeTable {
+            margin-top: 20px;
+            display: flex;
+            flex-wrap: wrap;
+        }
+        .time-slot {
+            margin: 5px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            width: 100px;
+            text-align: center;
+        }
+        .time-slot.selected {
+            background-color: #ffeb3b;
+        }
+        .time-slot.booked {
+            background-color: #f44336;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
     <h1>Art Studio Reservation</h1>
     <input type="text" id="calendar" placeholder="Select Date">
     <p>Selected Date: <span id="selectedDate">None</span></p>
+    <div id="timeTable"></div>
     <p>Remaining Reservations: <span id="remaining">3</span></p>
     <button id="reserveBtn">Reserve</button>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
